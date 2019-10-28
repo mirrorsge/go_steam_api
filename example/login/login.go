@@ -7,7 +7,7 @@ import (
 
 func main() {
 	gsa := go_steam_api.New()
-	loginURL := gsa.Authentication.GenLoginUrl("https://baidu.com")
+	loginURL := gsa.Authentication.GenLoginUrl("http://localhost/steamOpenIDValidation")
 	fmt.Println(loginURL)
 	return
 }

@@ -2,7 +2,12 @@ package authentication
 
 import (
 	"errors"
+	"fmt"
+	"io"
+	"net/http"
 	"net/url"
+	"strings"
+	"time"
 )
 
 type Authentication struct {
@@ -35,13 +40,34 @@ func (a *Authentication) GenLoginUrl(redirectURL string) (loginURL string) {
 /*
 将接口跳转回来的参数进行验证
 signed: openid.signed
-
 */
 
-func (a *Authentication) ValidateOpenID(signed string) (steamID string, err error ) {
-	if signed == "" {
+func (a *Authentication) ValidateOpenID(signedParams map[string]string) (steamID string, err error ) {
+	if signedParams["openid.signed"] == "" {
 		return "", errors.New("signed为空，验证失败")
 	}
-
+	signedParams["openid.mode"] = "check_authentication"
+	postData := url.Values{}
+	for k, v := range signedParams {
+		postData.Add(k,v)
+	}
+	//编码
+	var buf io.Reader
+	buf = strings.NewReader(postData.Encode())
+	//todo 对http请求进行统一封装，便于多处调用 && 设置代理
+	//设置代理
+	//proxy, _ := url.Parse("http://127.0.0.1:1087")
+	//httpTransport := &http.Transport{
+	//	Proxy:         http.ProxyURL(proxy),
+	//}
+	httpClient := http.Client{
+		//Transport:httpTransport,
+		Timeout:time.Duration(5 * time.Second),
+	}
+	resp, err  := httpClient.Post(loginUrl,"x-www-form-urlencoded",buf)
+	if err != nil {
+		return "", err
+	}
+	fmt.Println(resp)
 	return steamID, nil
 }
